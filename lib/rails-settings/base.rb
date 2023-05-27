@@ -32,8 +32,7 @@ module RailsSettings
 
     class << self
       def clear_cache
-        RequestCache.reset
-        Rails.cache.delete(cache_key)
+        ::RailsSettings::Cache.clear
       end
 
       def field(key, **opts)
@@ -58,13 +57,11 @@ module RailsSettings
       end
 
       def cache_prefix(&block)
-        @cache_prefix = block
+        ::RailsSettings::Cache.set_prefix(&block)
       end
 
       def cache_key
-        key_parts = ["rails-settings-cached"]
-        key_parts << @cache_prefix.call if @cache_prefix
-        key_parts.join("/")
+        ::RailsSettings::Cache.key
       end
 
       def keys
@@ -122,17 +119,8 @@ module RailsSettings
         end
       end
 
-      def rails_initialized?
-        Rails.application&.initialized?
-      end
-
       def _all_settings
-        RequestCache.all_settings ||= Rails.cache.fetch(cache_key, expires_in: 1.week) do
-          vars = unscoped.select("var, value")
-          result = {}
-          vars.each { |record| result[record.var] = record.value }
-          result.with_indifferent_access
-        end
+        ::RailsSettings::Cache.settings(self)
       end
     end
   end
