@@ -19,10 +19,8 @@ module RailsSettings
 
     def settings(parent)
       request_cache.all_settings ||= rails_cache.fetch(key, expires_in: 1.week) do
-        vars = parent.unscoped.select("var, value")
-        result = {}
-        vars.each { |record| result[record.var] = record.value }
-        result.with_indifferent_access
+        records = parent.unscoped.select("var, value")
+        records.reduce({}) { |result, record| result.merge(record.var => record.value) }.with_indifferent_access
       end
     end
 
